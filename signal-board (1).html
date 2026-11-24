@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Signal Board – block, caution, go</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f1f3f5;--surface:#ffffff;--ink:#14202b;--mute:#5b6975;--line:#d5dbe0;
+  --red:#d92d3a;--yellow:#e3a008;--green:#1f9d5c;--unlit:#e6eaed;
+  --head:"Barlow Condensed","Arial Narrow",Arial,sans-serif;--body:"Barlow",system-ui,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f161d;--surface:#17212a;--ink:#e8edf1;--mute:#93a1ad;--line:#27343f;--red:#ff4d58;--yellow:#ffc233;--green:#35c47a;--unlit:#212d37;}}
+:root[data-theme="dark"]{--bg:#0f161d;--surface:#17212a;--ink:#e8edf1;--mute:#93a1ad;--line:#27343f;--red:#ff4d58;--yellow:#ffc233;--green:#35c47a;--unlit:#212d37;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 var(--body)}
+main{max-width:880px;margin:0 auto;padding:20px 16px 64px}
+h1{font:700 clamp(34px,7vw,56px)/1 var(--head);margin:8px 0 6px;letter-spacing:.01em}
+.sub{color:var(--mute);margin:0 0 18px;max-width:60ch}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+.legend span{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 6px;font-weight:500}
+.dot{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font:700 13px var(--head);color:#fff}
+.d1{background:var(--red)}.d2{background:var(--yellow);color:#1b1500}.d3{background:var(--green)}
+.meter{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--unlit);margin:0 0 6px}
+.meter i{display:block;height:100%;transition:width .25s}
+.counts{display:flex;gap:16px;flex-wrap:wrap;color:var(--mute);font-size:14px;margin-bottom:18px}
+.counts b{color:var(--ink);font-family:var(--head);font-size:18px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.chip{font:500 14px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 13px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.lamp:focus-visible,.row:focus-visible,input:focus-visible,select:focus-visible,.btn:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.btn{font:500 14px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer}
+.spacer{flex:1}
+.nt{margin:4px 0 6px}.nt summary{display:inline-block;list-style:none;cursor:pointer;background:var(--ink);color:var(--bg);font-weight:500}.nt summary::-webkit-details-marker{display:none}
+section{margin-top:26px}
+h2{font:700 26px/1 var(--head);margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
+h2 small{font:400 14px var(--body);color:var(--mute)}
+.row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;flex-wrap:wrap}
+.row[data-v="1"]{border-left-color:var(--red)}.row[data-v="2"]{border-left-color:var(--yellow)}.row[data-v="3"]{border-left-color:var(--green)}
+.row.hot{border-color:var(--ink);border-left-color:inherit}
+.txt{flex:1 1 220px;min-width:0}
+.name{font-weight:500}
+.note{color:var(--mute);font-size:14px}
+.status{font:700 15px var(--head);min-width:70px;text-align:right;color:var(--mute)}
+.row[data-v="1"] .status{color:var(--red)}.row[data-v="2"] .status{color:var(--yellow)}.row[data-v="3"] .status{color:var(--green)}
+.lamps{display:flex;gap:8px;background:#0b1117;padding:6px 8px;border-radius:999px}
+.lamp{width:38px;height:38px;border-radius:50%;border:2px solid transparent;background:#26333e;color:#8798a6;font:700 18px var(--head);cursor:pointer;transition:transform .1s,box-shadow .15s}
+.lamp:active{transform:scale(.92)}
+.lamp[data-l="1"][aria-pressed="true"]{background:var(--red);color:#fff;box-shadow:0 0 14px 2px var(--red)}
+.lamp[data-l="2"][aria-pressed="true"]{background:var(--yellow);color:#1b1500;box-shadow:0 0 14px 2px var(--yellow)}
+.lamp[data-l="3"][aria-pressed="true"]{background:var(--green);color:#fff;box-shadow:0 0 14px 2px var(--green)}
+.x{border:0;background:none;color:var(--mute);cursor:pointer;font-size:20px;padding:0 4px}
+form.add{display:flex;gap:8px;flex-wrap:wrap;margin-top:28px;padding:14px;border:1px dashed var(--line);border-radius:10px}
+input,select{font:400 16px var(--body);padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-width:0}
+input{flex:1 1 200px}
+.hint{color:var(--mute);font-size:14px;margin-top:20px}
+.empty{color:var(--mute);padding:10px 2px}
+@media (max-width:520px){.status{display:none}.lamps{margin-left:auto}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Signal Board</h1>
+  <p class="sub">Rate every technique, function and app: stop it, handle it with care, or let it through. Your choices are saved in this browser.</p>
+
+  <div class="legend">
+    <span><i class="dot d1">1</i>Block</span>
+    <span><i class="dot d2">2</i>Caution</span>
+    <span><i class="dot d3">3</i>Go</span>
+    <span><i class="dot" style="background:var(--unlit);color:var(--mute)">0</i>Clear</span>
+  </div>
+
+  <div class="meter" id="meter" aria-hidden="true"></div>
+  <div class="counts" id="counts"></div>
+
+  <div class="bar" id="catbar" role="group" aria-label="Category"></div>
+  <div class="bar" id="lightbar" role="group" aria-label="Light filter"></div>
+  <div class="bar"><span class="spacer"></span><button class="btn" id="copy">Copy summary</button><button class="btn" id="reset">Reset all</button></div>
+
+  <details class="nt" id="nt"><summary class="btn">+ Create your own topic light</summary>
+    <form class="add" id="topicf" style="margin-top:10px">
+      <input id="tname" placeholder="Topic name (e.g. Cooking, Money, Fitness)…" maxlength="40" aria-label="Topic name">
+      <input id="titems" placeholder="Items, separated by commas (optional)…" maxlength="400" aria-label="Topic items">
+      <button class="btn" type="submit">Create topic</button>
+    </form>
+  </details>
+
+  <div id="list"></div>
+
+  <form class="add" id="add">
+    <input id="newname" placeholder="Add your own item…" maxlength="60" aria-label="New item name">
+    <select id="newcat" aria-label="Category"></select>
+    <button class="btn" type="submit">Add item</button>
+  </form>
+  <p class="hint">Tip: hover or focus a row, then press 1, 2 or 3 on your keyboard. Press 0 to clear it.</p>
+</main>
+
+<script>
+const CATS={pc:"PC & apps",human:"Human habits",society:"Society",religion:"Religion",travel:"Travel",vehicles:"Vehicles",social:"Social networks",music:"Music",reading:"Reading",movies:"Movies & series",emotions:"Emotions",science:"Science",tech:"Technology",nature:"Nature & eco-friendly",games:"Games & play",talk:"Conversation",meditation:"Meditation"};
+const CATS0={...CATS};
+const BASE={
+pc:[["Social media apps","Feeds, likes and endless scroll"],["Short-video feeds","Autoplay clips that eat hours"],["Games","Singleplayer and multiplayer"],["News notifications","Push alerts and breaking banners"],["Email checking","Inbox every few minutes"],["Messaging apps","WhatsApp, Telegram, Messenger"],["Video recommendations","Autoplay and the next-up queue"],["Online shopping","Carts, deals and flash sales"],["AI chatbots","Questions, drafts and ideas"],["Too many browser tabs","Open loops everywhere"],["Focus timer","Pomodoro and work sprints"],["Website blockers","Tools that lock distracting sites"]],
+human:[["Multitasking","Several things at once"],["Doomscrolling","Bad news on repeat"],["Late-night screens","Phone in bed"],["Procrastination","Later, always later"],["Caffeine","Coffee, energy drinks"],["Deep work","Long, quiet blocks"],["Exercise","Walks, gym, stretching"],["Journaling","Writing thoughts down"],["Napping","Short daytime rest"],["Comparing yourself to others","Highlight reels vs your life"],["Perfectionism","Never quite done"],["Snacking while working","Grazing at the desk"]],
+society:[["Gossip","Talking about people not present"],["Group chats","Always-on side conversations"],["Long meetings","Could have been a message"],["Peer pressure","Doing it because everyone does"],["Online political debates","Arguing with strangers"],["Influencer culture","Curated lives and promotions"],["Outrage cycles","Pile-ons and trending anger"],["Networking events","Small talk with a purpose"],["Family obligations","Visits, favours, expectations"],["Status symbols","Buying to be seen"],["Volunteering","Time given to the community"],["Neighbourhood chatter","Local news and opinions"]],
+religion:[["Daily prayer","Fixed times, fixed rhythm"],["Fasting","Food or other abstentions"],["Scripture study","Reading and reflection"],["Meditation","Stillness and breath"],["Community gatherings","Services, feasts, meetings"],["Pilgrimage","Travel with a purpose"],["Charity","Alms and giving"],["Confession and reflection","Looking honestly inward"],["Online doctrine debates","Arguing beliefs in comments"],["Sermon apps and podcasts","Teachings on demand"],["Ritual calendar","Holidays and observances"],["Silent retreat","Time away from noise"]]
+};
+const P=t=>t.split(";").map(x=>x.split("|"));
+Object.assign(BASE,{
+travel:P("Weekend city breaks|Short trips to a new city;Long trips abroad|Weeks away from home;Solo travel|Just you and the map;Backpacking|Light bags, cheap stays;Road trips|Windows down, no schedule;Flying|Airports and turbulence;Cruises|Floating hotels;Staycations|Tourist in your own town;Island hopping|Ferries and beaches;Mountain trips|Hiking and fresh air"),
+vehicles:P("Daily driving|Car as default transport;Owning a car|Fuel, insurance, parking;Motorbike or scooter|Two wheels, fast and exposed;Public transport|Bus, metro, tram;Cycling|Commuting or leisure;Electric cars|Charging and silence;Ride-sharing|Taxis and apps;Walking instead|Short trips on foot;Speeding|Pushing the limit;Car sharing|Rent by the hour"),
+social:P("Instagram|Photos and reels;TikTok|Short videos;X / Twitter|Fast public takes;Facebook|Friends, groups, memories;YouTube|Long and short videos;Reddit|Communities and threads;LinkedIn|Career and networking;Discord|Servers and voice chats;Posting your own life|Sharing publicly;Following influencers|Curated feeds"),
+music:P("Pop|Radio hits;Rock and metal|Loud guitars;Classical|Orchestra and piano;Jazz|Improvisation;Hip-hop|Rhythm and words;Electronic|Beats and synths;Greek music|Laiko, rebetiko, entekhno;Playing an instrument|Making your own sound;Live concerts|Crowds and volume;Music while working|Background soundtrack"),
+reading:P("Novels|Fiction stories;Non-fiction|Facts and ideas;Fantasy and sci-fi|Other worlds;News articles|Daily headlines;Poetry|Dense and short;Comics and manga|Illustrated stories;Audiobooks|Reading by ear;Self-help|Advice and habits;Textbooks and study|Learning on purpose;Reading in bed|Last pages of the day"),
+movies:P("Action|Chases and explosions;Comedy|Easy laughs;Horror|Fear for fun;Documentaries|Real stories;Drama|Heavy and human;Sci-fi|Future and space;Anime|Japanese animation;Binge-watching|One more episode;Cinema trips|Big screen, popcorn;Rewatching favourites|Comfort movies"),
+emotions:P("Anger|Heat and tension;Anxiety|Worry about what's next;Joy|Light and bright;Nostalgia|Missing the past;Jealousy|Wanting what others have;Loneliness|Too much quiet;Gratitude|Noticing what's good;Curiosity|Wanting to know;Boredom|Nothing to do;Crying it out|Letting feelings out"),
+science:P("Astronomy|Stars and planets;Physics|Forces and particles;Biology and genetics|Life and DNA;Psychology|How minds work;Mathematics|Patterns and proofs;Space exploration|Rockets and rovers;Climate science|Data about the planet;Medicine|Health research;Pseudoscience|Claims without proof;Science news|Studies in headlines"),
+tech:P("AI tools|Assistants and generators;Smartphones|Always in the pocket;Smart home|Connected devices;Smartwatches|Wrist trackers;Crypto|Coins and tokens;Robotics|Machines that act;Gadget upgrades|Always the newest model;Open source|Free and shared code;VR and AR|Headsets and overlays;Self-driving cars|Cars without drivers"),
+nature:P("Recycling|Sorting waste;Hiking|Trails and views;Plant-based eating|Less meat;Cutting plastic|Bags, bottles, packaging;Solar energy|Power from the sun;Gardening|Growing things;Camping|Sleeping outdoors;Second-hand buying|Reuse before new;Fast fashion|Cheap, quick clothes;Animal care|Pets and wildlife;Sea and beach clean-ups|Community action"),
+games:P("Video games|Console and PC;Board games|Tabletop evenings;Chess|Pure strategy;Puzzles|Jigsaws and logic;Card games|Casual or competitive;Mobile games|Quick sessions;Esports|Competitive gaming;Loot boxes|Paid random rewards;Sports play|Football, basketball, tennis;Role-playing|Characters and stories"),
+talk:P("Deep talks|Meaningful conversation;Small talk|Weather and weekends;Debates|Arguing a point;Active listening|Hearing before replying;Phone calls|Live voice;Voice messages|Long audio notes;Talking to strangers|Starting from zero;Public speaking|Talking to a crowd;Giving advice|Telling others what to do;Arguments|Heated back-and-forth"),
+meditation:P("Breathing exercises|Slow and counted;Mindfulness|Noticing the present;Guided meditation|Voice leads the way;Body scan|Attention head to toe;Walking meditation|Slow and aware;Yoga|Movement and stillness;Silence|No input at all;Mantra chanting|Repeated sounds;Visualisation|Imagined scenes;Gratitude practice|Three good things")
+});
+const NAMES={0:"Unset",1:"Block",2:"Caution",3:"Go"};
+const KEY="signal-board-v1";
+let S={r:{},custom:[],cats:[]},cat="all",light="all",hot=null;
+try{const j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.r)S=j;}catch(e){}
+S.cats=S.cats||[];S.cats.forEach(x=>CATS[x.k]=x.n);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const id=(c,n)=>c+":"+n;
+function items(c){return (BASE[c]||[]).map(x=>({c,n:x[0],d:x[1],custom:false})).concat(S.custom.filter(x=>x.c===c).map(x=>({c,n:x.n,d:"Your own item",custom:true})));}
+function all(){return Object.keys(CATS).flatMap(items);}
+
+function chips(el,opts,cur,fn){
+  el.innerHTML=opts.map(o=>`<button class="chip" aria-pressed="${o[0]===cur}" data-k="${o[0]}">${esc(o[1])}</button>`).join("");
+  el.onclick=e=>{const b=e.target.closest("button");if(b){fn(b.dataset.k);render();}};
+}
+function render(){
+  const a=all(),cnt=[0,0,0,0];a.forEach(i=>cnt[S.r[id(i.c,i.n)]||0]++);
+  const tot=a.length||1;
+  document.getElementById("meter").innerHTML=[1,2,3].map(v=>`<i style="width:${cnt[v]/tot*100}%;background:var(--${["","red","yellow","green"][v]})"></i>`).join("");
+  document.getElementById("counts").innerHTML=`<span><b>${cnt[1]}</b> blocked</span><span><b>${cnt[2]}</b> caution</span><span><b>${cnt[3]}</b> go</span><span><b>${cnt[0]}</b> unrated</span>`;
+  chips(document.getElementById("catbar"),[["all","All"]].concat(Object.entries(CATS)),cat,k=>cat=k);
+  chips(document.getElementById("lightbar"),[["all","Any light"],["1","1 Block"],["2","2 Caution"],["3","3 Go"],["0","Unrated"]],light,k=>light=k);
+  let h="";
+  for(const c of Object.keys(CATS)){
+    if(cat!=="all"&&cat!==c)continue;
+    const rows=items(c).filter(i=>light==="all"||String(S.r[id(c,i.n)]||0)===light);
+    if(!rows.length&&light!=="all")continue;
+    h+=`<section><h2>${esc(CATS[c])}<small>${rows.length} items</small>${c in CATS0?"":`<button class="x" data-topic="${c}" aria-label="Delete topic" title="Delete topic">×</button>`}</h2>`;
+    h+=rows.map(i=>{const k=id(c,i.n),v=S.r[k]||0;
+      return `<div class="row" tabindex="0" data-id="${esc(k)}" data-v="${v}">
+        <div class="txt"><div class="name">${esc(i.n)}</div><div class="note">${esc(i.d)}</div></div>
+        <span class="status">${NAMES[v]}</span>
+        <div class="lamps" role="group" aria-label="Light for ${esc(i.n)}">${[1,2,3].map(l=>`<button class="lamp" data-l="${l}" aria-pressed="${v===l}" aria-label="${NAMES[l]}" title="${NAMES[l]} (${l})">${l}</button>`).join("")}</div>
+        ${i.custom?`<button class="x" data-del="1" aria-label="Delete ${esc(i.n)}" title="Delete">×</button>`:""}
+      </div>`}).join("")||`<div class="empty">Nothing here yet.</div>`;
+    h+="</section>";
+  }
+  document.getElementById("list").innerHTML=h||`<div class="empty">No items match this filter.</div>`;
+  if(hot){const r=[...document.querySelectorAll(".row")].find(x=>x.dataset.id===hot);if(r)r.classList.add("hot");}
+}
+function setV(k,v){if(v===0)delete S.r[k];else S.r[k]=v;save();render();}
+const list=document.getElementById("list");
+list.addEventListener("click",e=>{
+  const row=e.target.closest(".row");if(!row)return;const k=row.dataset.id;
+  const l=e.target.closest(".lamp");
+  if(l){const v=+l.dataset.l;setV(k,(S.r[k]===v)?0:v);return;}
+  if(e.target.closest("[data-del]")){const [c,...n]=k.split(":");const name=n.join(":");
+    S.custom=S.custom.filter(x=>!(x.c===c&&x.n===name));delete S.r[k];save();render();}
+});
+list.addEventListener("mouseover",e=>{const r=e.target.closest(".row");if(r)hot=r.dataset.id;});
+list.addEventListener("focusin",e=>{const r=e.target.closest(".row");if(r)hot=r.dataset.id;});
+list.addEventListener("mouseleave",()=>{hot=null;});
+document.addEventListener("keydown",e=>{
+  if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(!"0123".includes(e.key)||e.key.length!==1)return;
+  const f=e.target.closest&&e.target.closest(".row");const k=f?f.dataset.id:hot;
+  if(!k)return;e.preventDefault();
+  const el=document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".row");
+  const refocus=el?el.dataset.id:null;
+  setV(k,+e.key);
+  if(refocus){const r=[...document.querySelectorAll(".row")].find(x=>x.dataset.id===refocus);if(r)r.focus();}
+});
+function fillSel(){document.getElementById("newcat").innerHTML=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");}
+fillSel();
+document.getElementById("add").addEventListener("submit",e=>{
+  e.preventDefault();const inp=document.getElementById("newname"),n=inp.value.trim(),c=document.getElementById("newcat").value;
+  if(!n||items(c).some(x=>x.n.toLowerCase()===n.toLowerCase()))return;
+  S.custom.push({c,n});save();inp.value="";cat="all";light="all";render();
+});
+document.getElementById("reset").onclick=()=>{if(confirm("Clear every light and remove your own items and topics?")){Object.keys(CATS).forEach(k=>{if(!(k in CATS0))delete CATS[k];});S={r:{},custom:[],cats:[]};cat="all";fillSel();save();render();}};
+document.getElementById("copy").onclick=async e=>{
+  const g={1:[],2:[],3:[]};all().forEach(i=>{const v=S.r[id(i.c,i.n)];if(v)g[v].push(i.n);});
+  const t=`BLOCK: ${g[1].join(", ")||"-"}\nCAUTION: ${g[2].join(", ")||"-"}\nGO: ${g[3].join(", ")||"-"}`;
+  const b=e.target;try{await navigator.clipboard.writeText(t);b.textContent="Copied";}catch(x){b.textContent="Copy not allowed here";}
+  setTimeout(()=>b.textContent="Copy summary",1500);
+};
+list.addEventListener("click",e=>{
+  const b=e.target.closest("[data-topic]");if(!b)return;const k=b.dataset.topic;
+  if(!confirm("Delete this topic and all its items?"))return;
+  S.cats=S.cats.filter(x=>x.k!==k);S.custom=S.custom.filter(x=>x.c!==k);
+  Object.keys(S.r).forEach(r=>{if(r.startsWith(k+":"))delete S.r[r];});
+  delete CATS[k];if(cat===k)cat="all";save();fillSel();render();
+});
+document.getElementById("topicf").addEventListener("submit",e=>{
+  e.preventDefault();const tn=document.getElementById("tname"),ti=document.getElementById("titems"),n=tn.value.trim();
+  if(!n||Object.values(CATS).some(v=>v.toLowerCase()===n.toLowerCase()))return;
+  const k="u"+Date.now().toString(36);S.cats.push({k,n});CATS[k]=n;
+  ti.value.split(",").map(x=>x.trim()).filter((x,i,a)=>x&&a.indexOf(x)===i).slice(0,30).forEach(x=>S.custom.push({c:k,n:x}));
+  save();fillSel();tn.value="";ti.value="";cat=k;light="all";document.getElementById("nt").open=false;render();
+});
+render();
+</script>
+</body>
+</html>
